@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import axios from 'axios';
 import API from '../api';
 
 const வகைகள் = ['அனைத்தும்', 'சாலை', 'குடிநீர்', 'மின்சாரம்', 'சுகாதாரம்', 'பாதுகாப்பு', 'கல்வி', 'மற்றவை'];
@@ -22,13 +21,6 @@ export default function Home() {
   const [imagePreview, setImagePreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => { fetchProblems(); }, []);
-
-  useEffect(() => {
-    if (activeFilter === 'அனைத்தும்') setFiltered(problems);
-    else setFiltered(problems.filter(p => p.வகை === activeFilter));
-  }, [activeFilter, problems]);
-
   const getMyUserId = () => {
     try {
       const token = localStorage.getItem('conhub_token');
@@ -44,7 +36,7 @@ export default function Home() {
     }
   };
 
-  const fetchProblems = async () => {
+  const fetchProblems = useCallback(async () => {
     try {
       const { data } = await API.get('/problems');
       setProblems(data);
@@ -62,7 +54,16 @@ export default function Home() {
       toast.error('பிரச்னைகள் ஏற்றுவதில் தோல்வி');
     }
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchProblems();
+  }, [fetchProblems]);
+
+  useEffect(() => {
+    if (activeFilter === 'அனைத்தும்') setFiltered(problems);
+    else setFiltered(problems.filter(p => p.வகை === activeFilter));
+  }, [activeFilter, problems]);
 
   const handleVote = async (id) => {
     try {
@@ -106,14 +107,13 @@ export default function Home() {
     setSubmitting(true);
     try {
       const fd = new FormData();
-      fd.append('title', form.தலைப்பு);
-      fd.append('description', form.விளக்கம்);
-      fd.append('category', form.வகை);
-      if (imageFile) fd.append('image', imageFile);
+      fd.append('தலைப்பு', form.தலைப்பு);
+      fd.append('விளக்கம்', form.விளக்கம்);
+      fd.append('வகை', form.வகை);
+      if (imageFile) fd.append('படம்', imageFile);
 
-      const token = localStorage.getItem('conhub_token');
-      await axios.post('http://localhost:5000/api/problems', fd, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      await API.post('/problems', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       toast.success('பிரச்னை வெற்றிகரமாக சேர்க்கப்பட்டது! ✅');
@@ -205,7 +205,7 @@ export default function Home() {
                 <div key={p._id} className="problem-card">
                   {p.படம் ? (
                     <img
-                      src={`http://localhost:5000${p.படம்}`}
+                      src={`https://con-hub-api.onrender.com${p.படம்}`}
                       alt={p.தலைப்பு}
                       className="problem-image"
                     />
