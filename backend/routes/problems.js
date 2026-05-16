@@ -17,12 +17,8 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
+const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-// தொகுதி பிரச்னைகள் பெறவும் — வாக்கு எண்ணிக்கை அதிகம் முதல்
 router.get('/', auth, async (req, res) => {
   try {
     const problems = await Problem.find({ தொகுதி: req.user.தொகுதி }).lean();
@@ -33,12 +29,16 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// புதிய பிரச்னை உருவாக்கவும்
-router.post('/', auth, upload.single('படம்'), async (req, res) => {
+router.post('/', auth, upload.single('image'), async (req, res) => {
   try {
-    const தலைப்பு = req.body['தலைப்பு'] || req.body.title;
-    const விளக்கம் = req.body['விளக்கம்'] || req.body.description;
-    const வகை = req.body['வகை'] || req.body.category;
+    console.log('Body received:', req.body);
+    console.log('File received:', req.file);
+
+    const தலைப்பு = req.body.title || req.body['title'];
+    const விளக்கம் = req.body.description || req.body['description'];
+    const வகை = req.body.category || req.body['category'];
+
+    console.log('Parsed:', { தலைப்பு, விளக்கம், வகை });
 
     if (!தலைப்பு || !விளக்கம் || !வகை) {
       return res.status(400).json({ செய்தி: 'தலைப்பு, விளக்கம், வகை கட்டாயம்' });
@@ -60,7 +60,6 @@ router.post('/', auth, upload.single('படம்'), async (req, res) => {
   }
 });
 
-// வாக்களிக்கவும்
 router.post('/:id/vote', auth, async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.id);
@@ -84,7 +83,6 @@ router.post('/:id/vote', auth, async (req, res) => {
   }
 });
 
-// பிரச்னை நீக்கவும்
 router.delete('/:id', auth, async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.id);

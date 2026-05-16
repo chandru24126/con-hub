@@ -107,10 +107,10 @@ export default function Home() {
     setSubmitting(true);
     try {
       const fd = new FormData();
-      fd.append('தலைப்பு', form.தலைப்பு);
-      fd.append('விளக்கம்', form.விளக்கம்);
-      fd.append('வகை', form.வகை);
-      if (imageFile) fd.append('படம்', imageFile);
+      fd.append('title', form.தலைப்பு);
+      fd.append('description', form.விளக்கம்);
+      fd.append('category', form.வகை);
+      if (imageFile) fd.append('image', imageFile);
 
       await API.post('/problems', fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
