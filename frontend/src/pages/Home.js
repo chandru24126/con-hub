@@ -99,31 +99,32 @@ export default function Home() {
     }
   };
 
-const handleSubmit = async () => {
+  const handleSubmit = async () => {
     if (!form.தலைப்பு || !form.விளக்கம்) {
       toast.error('தலைப்பு மற்றும் விளக்கம் கட்டாயம்');
       return;
     }
     setSubmitting(true);
     try {
-      let imageUrl = null;
+      let imagePath = null;
 
-      // Step 1: Upload image separately if exists
       if (imageFile) {
-        const imgData = new FormData();
-        imgData.append('image', imageFile);
-        const imgRes = await API.post('/problems/upload', imgData, {
+        const fd = new FormData();
+        fd.append('image', imageFile);
+        const uploadRes = await API.post('/problems/upload', fd, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        imageUrl = imgRes.data.url;
+        console.log('Upload response:', uploadRes.data);
+        imagePath = uploadRes.data.path;
       }
 
-      // Step 2: Send problem as JSON
+      console.log('Sending imagePath:', imagePath);
+
       await API.post('/problems', {
         title: form.தலைப்பு,
         description: form.விளக்கம்,
         category: form.வகை,
-        imageUrl: imageUrl
+        imagePath: imagePath
       });
 
       toast.success('பிரச்னை வெற்றிகரமாக சேர்க்கப்பட்டது! ✅');
@@ -155,6 +156,12 @@ const handleSubmit = async () => {
       ? p.பயனர்._id.toString()
       : p.பயனர்?.toString() || '';
     return pid === myUserId;
+  };
+
+  const getImageSrc = (படம்) => {
+    if (!படம்) return null;
+    if (படம்.startsWith('http')) return படம்;
+    return `https://con-hub-api.onrender.com${படம்}`;
   };
 
   return (
@@ -213,11 +220,12 @@ const handleSubmit = async () => {
             <div className="problems-grid">
               {filtered.map(p => (
                 <div key={p._id} className="problem-card">
-                  {p.படம் ? (
+                  {getImageSrc(p.படம்) ? (
                     <img
-                      src={`https://con-hub-api.onrender.com${p.படம்}`}
+                      src={getImageSrc(p.படம்)}
                       alt={p.தலைப்பு}
                       className="problem-image"
+                      onError={(e) => { e.target.style.display='none'; }}
                     />
                   ) : (
                     <div className="problem-image-placeholder">📷</div>
