@@ -34,16 +34,20 @@ router.get('/', auth, async (req, res) => {
 });
 
 // புதிய பிரச்னை உருவாக்கவும்
-router.post('/', auth, upload.single('image'), async (req, res) => {
+router.post('/', auth, upload.single('படம்'), async (req, res) => {
   try {
-    const { title, description, category } = req.body;
-    if (!title || !description || !category) {
+    const தலைப்பு = req.body['தலைப்பு'] || req.body.title;
+    const விளக்கம் = req.body['விளக்கம்'] || req.body.description;
+    const வகை = req.body['வகை'] || req.body.category;
+
+    if (!தலைப்பு || !விளக்கம் || !வகை) {
       return res.status(400).json({ செய்தி: 'தலைப்பு, விளக்கம், வகை கட்டாயம்' });
     }
+
     const problem = new Problem({
-      தலைப்பு: title,
-      விளக்கம்: description,
-      வகை: category,
+      தலைப்பு,
+      விளக்கம்,
+      வகை,
       படம்: req.file ? `/uploads/${req.file.filename}` : null,
       மாவட்டம்: req.user.மாவட்டம்,
       தொகுதி: req.user.தொகுதி,
