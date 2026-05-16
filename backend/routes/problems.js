@@ -19,6 +19,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
+// Image upload only
+router.post('/upload', auth, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ செய்தி: 'படம் இல்லை' });
+    res.json({ path: `/uploads/${req.file.filename}` });
+  } catch (err) {
+    res.status(500).json({ செய்தி: 'படம் பதிவேற்ற முடியவில்லை' });
+  }
+});
+
+// Get problems
 router.get('/', auth, async (req, res) => {
   try {
     const problems = await Problem.find({ தொகுதி: req.user.தொகுதி }).lean();
@@ -29,26 +40,21 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-router.post('/', auth, upload.single('image'), async (req, res) => {
+// Create problem — JSON body
+router.post('/', auth, async (req, res) => {
   try {
-    console.log('Body received:', req.body);
-    console.log('File received:', req.file);
+    console.log('Body:', req.body);
+    const { title, description, category, imagePath } = req.body;
 
-    const தலைப்பு = req.body.title || req.body['title'];
-    const விளக்கம் = req.body.description || req.body['description'];
-    const வகை = req.body.category || req.body['category'];
-
-    console.log('Parsed:', { தலைப்பு, விளக்கம், வகை });
-
-    if (!தலைப்பு || !விளக்கம் || !வகை) {
+    if (!title || !description || !category) {
       return res.status(400).json({ செய்தி: 'தலைப்பு, விளக்கம், வகை கட்டாயம்' });
     }
 
     const problem = new Problem({
-      தலைப்பு,
-      விளக்கம்,
-      வகை,
-      படம்: req.file ? `/uploads/${req.file.filename}` : null,
+      தலைப்பு: title,
+      விளக்கம்: description,
+      வகை: category,
+      படம்: imagePath || null,
       மாவட்டம்: req.user.மாவட்டம்,
       தொகுதி: req.user.தொகுதி,
       பயனர்: req.user.id
@@ -60,6 +66,7 @@ router.post('/', auth, upload.single('image'), async (req, res) => {
   }
 });
 
+// Vote
 router.post('/:id/vote', auth, async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.id);
@@ -83,6 +90,7 @@ router.post('/:id/vote', auth, async (req, res) => {
   }
 });
 
+// Delete
 router.delete('/:id', auth, async (req, res) => {
   try {
     const problem = await Problem.findById(req.params.id);
