@@ -1,29 +1,34 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const Problem = require('../models/Problem');
 const auth = require('../middleware/auth');
+require('dotenv').config();
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '..', 'uploads');
-    fs.mkdirSync(uploadDir, { recursive: true });
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'conhub',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 800, crop: 'limit' }]
   }
 });
 
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-// Image upload only
+// Image upload
 router.post('/upload', auth, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ செய்தி: 'படம் இல்லை' });
-    res.json({ path: `/uploads/${req.file.filename}` });
+    res.json({ path: req.file.path });
   } catch (err) {
     res.status(500).json({ செய்தி: 'படம் பதிவேற்ற முடியவில்லை' });
   }
@@ -40,16 +45,13 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// Create problem — JSON body
+// Create problem
 router.post('/', auth, async (req, res) => {
   try {
-    console.log('Body:', req.body);
     const { title, description, category, imagePath } = req.body;
-
     if (!title || !description || !category) {
       return res.status(400).json({ செய்தி: 'தலைப்பு, விளக்கம், வகை கட்டாயம்' });
     }
-
     const problem = new Problem({
       தலைப்பு: title,
       விளக்கம்: description,
@@ -73,16 +75,13 @@ router.post('/:id/vote', auth, async (req, res) => {
     if (!problem) return res.status(404).json({ செய்தி: 'பிரச்னை கிடைக்கவில்லை' });
     if (problem.தொகுதி !== req.user.தொகுதி)
       return res.status(403).json({ செய்தி: 'உங்கள் தொகுதியில் மட்டுமே வாக்களிக்கலாம்' });
-
     const userId = req.user.id;
     const alreadyVoted = problem.வாக்குகள்.map(id => id.toString()).includes(userId);
-
     if (alreadyVoted) {
       problem.வாக்குகள் = problem.வாக்குகள்.filter(id => id.toString() !== userId);
     } else {
       problem.வாக்குகள்.push(userId);
     }
-
     await problem.save();
     res.json({ வாக்குகள்: problem.வாக்குகள்.length, வாக்களித்தீர்கள்: !alreadyVoted });
   } catch (err) {
@@ -98,8 +97,8 @@ router.delete('/:id', auth, async (req, res) => {
     if (problem.பயனர்.toString() !== req.user.id)
       return res.status(403).json({ செய்தி: 'உங்கள் பிரச்னையை மட்டுமே நீக்கலாம்' });
     if (problem.படம்) {
-      const filePath = path.join(__dirname, '..', problem.படம்);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      const publicId = problem.படம்.split('/').slice(-2).join('/').split('.')[0];
+      await cloudinary.uploader.destroy(publicId);
     }
     await Problem.findByIdAndDelete(req.params.id);
     res.json({ செய்தி: 'பிரச்னை நீக்கப்பட்டது' });
