@@ -99,21 +99,31 @@ export default function Home() {
     }
   };
 
-  const handleSubmit = async () => {
+const handleSubmit = async () => {
     if (!form.தலைப்பு || !form.விளக்கம்) {
       toast.error('தலைப்பு மற்றும் விளக்கம் கட்டாயம்');
       return;
     }
     setSubmitting(true);
     try {
-      const fd = new FormData();
-      fd.append('title', form.தலைப்பு);
-      fd.append('description', form.விளக்கம்);
-      fd.append('category', form.வகை);
-      if (imageFile) fd.append('image', imageFile);
+      let imageUrl = null;
 
-      await API.post('/problems', fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+      // Step 1: Upload image separately if exists
+      if (imageFile) {
+        const imgData = new FormData();
+        imgData.append('image', imageFile);
+        const imgRes = await API.post('/problems/upload', imgData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        imageUrl = imgRes.data.url;
+      }
+
+      // Step 2: Send problem as JSON
+      await API.post('/problems', {
+        title: form.தலைப்பு,
+        description: form.விளக்கம்,
+        category: form.வகை,
+        imageUrl: imageUrl
       });
 
       toast.success('பிரச்னை வெற்றிகரமாக சேர்க்கப்பட்டது! ✅');
