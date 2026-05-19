@@ -437,7 +437,7 @@ body {
 
 .problem-date {
   font-size: 0.75rem;
-  color: var(--border);
+  color: #00b4d8;
 }
 
 /* New Problem Form */
