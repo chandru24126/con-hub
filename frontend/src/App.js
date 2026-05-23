@@ -7,7 +7,7 @@ import Home from './pages/Home';
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('conhub_token');
-  return token ? children : <Navigate to="/login" />;
+  return token ? children : <Navigate to="/register" />;
 };
 
 function App() {
@@ -20,10 +20,10 @@ function App() {
         }}
       />
       <Routes>
-        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/register" />} />
       </Routes>
     </BrowserRouter>
   );
