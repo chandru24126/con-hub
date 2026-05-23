@@ -50,9 +50,9 @@ export default function Register() {
     <div className="auth-page">
       <div className="auth-card">
         <div className="auth-logo">
-          <h1>🏛️ CON HUB</h1>
-          <p>புதிய கணக்கு உருவாக்கவும்</p>
-        </div>
+  <img src="/logo.png" alt="CON HUB" style={{ height: '100px', objectFit: 'contain', marginBottom: '0.5rem' }} />
+  <p>புதிய கணக்கு உருவாக்கவும்</p>
+</div>
 
         <div className="form-group">
           <label>முழு பெயர்</label>
