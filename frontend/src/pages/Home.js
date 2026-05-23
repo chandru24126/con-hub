@@ -15,11 +15,34 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState('அனைத்தும்');
   const [votedIds, setVotedIds] = useState([]);
   const [myUserId, setMyUserId] = useState('');
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstall, setShowInstall] = useState(false);
 
   const [form, setForm] = useState({ தலைப்பு: '', விளக்கம்: '', வகை: 'சாலை' });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowInstall(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstall = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const result = await installPrompt.userChoice;
+    if (result.outcome === 'accepted') {
+      setShowInstall(false);
+      toast.success('CON HUB நிறுவப்பட்டது! 🎉');
+    }
+    setInstallPrompt(null);
+  };
 
   const getMyUserId = () => {
     try {
@@ -107,26 +130,20 @@ export default function Home() {
     setSubmitting(true);
     try {
       let imagePath = null;
-
       if (imageFile) {
         const fd = new FormData();
         fd.append('image', imageFile);
         const uploadRes = await API.post('/problems/upload', fd, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        console.log('Upload response:', uploadRes.data);
         imagePath = uploadRes.data.path;
       }
-
-      console.log('Sending imagePath:', imagePath);
-
       await API.post('/problems', {
         title: form.தலைப்பு,
         description: form.விளக்கம்,
         category: form.வகை,
         imagePath: imagePath
       });
-
       toast.success('பிரச்னை வெற்றிகரமாக சேர்க்கப்பட்டது! ✅');
       setShowModal(false);
       setForm({ தலைப்பு: '', விளக்கம்: '', வகை: 'சாலை' });
@@ -166,18 +183,46 @@ export default function Home() {
 
   return (
     <>
+      {/* Navbar */}
       <nav className="navbar">
         <div className="container navbar-inner">
           <div className="logo">
-  <img src="/logo.png" alt="CON HUB" style={{ height: '45px', objectFit: 'contain' }} />
-</div>
+            <img
+              src="/logo.png"
+              alt="CON HUB"
+              style={{ height: '45px', objectFit: 'contain' }}
+            />
+          </div>
           <div className="nav-info">
+            {showInstall && (
+              <button
+                onClick={handleInstall}
+                style={{
+                  background: 'linear-gradient(135deg, #ff8906, #f25f4c)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '0.4rem 0.9rem',
+                  borderRadius: '20px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  fontWeight: '700',
+                  fontFamily: 'inherit',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                  boxShadow: '0 4px 12px rgba(255,137,6,0.4)'
+                }}
+              >
+                📲 நிறுவு
+              </button>
+            )}
             <span className="badge">{user.மாவட்டம்} - {user.தொகுதி}</span>
             <button className="btn btn-danger btn-sm" onClick={logout}>வெளியேறு</button>
           </div>
         </div>
       </nav>
 
+      {/* Header */}
       <div className="home-header">
         <div className="container">
           <h2>வணக்கம், <span>{user.பெயர்}</span>! 👋</h2>
@@ -190,6 +235,7 @@ export default function Home() {
         </div>
       </div>
 
+      {/* Problems */}
       <div className="problems-section">
         <div className="container">
           <div className="section-top">
@@ -227,7 +273,7 @@ export default function Home() {
                       src={getImageSrc(p.படம்)}
                       alt={p.தலைப்பு}
                       className="problem-image"
-                      onError={(e) => { e.target.style.display='none'; }}
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   ) : (
                     <div className="problem-image-placeholder">📷</div>
@@ -276,6 +322,7 @@ export default function Home() {
         </div>
       </div>
 
+      {/* New Problem Modal */}
       {showModal && (
         <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setShowModal(false)}>
           <div className="modal-box">
