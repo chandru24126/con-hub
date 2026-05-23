@@ -168,7 +168,9 @@ export default function Home() {
     <>
       <nav className="navbar">
         <div className="container navbar-inner">
-          <div className="logo">🏛️ CON HUB</div>
+          <div className="logo">
+  <img src="/logo.png" alt="CON HUB" style={{ height: '45px', objectFit: 'contain' }} />
+</div>
           <div className="nav-info">
             <span className="badge">{user.மாவட்டம்} - {user.தொகுதி}</span>
             <button className="btn btn-danger btn-sm" onClick={logout}>வெளியேறு</button>
