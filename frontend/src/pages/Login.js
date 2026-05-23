@@ -31,10 +31,10 @@ export default function Login() {
   return (
     <div className="auth-page">
       <div className="auth-card">
-        <div className="auth-logo">
-          <h1>🏛️ CON HUB</h1>
-          <p>உங்கள் தொகுதியின் குரல்</p>
-        </div>
+<div className="auth-logo">
+  <img src="/logo.png" alt="CON HUB" style={{ height: '100px', objectFit: 'contain', marginBottom: '0.5rem' }} />
+  <p>உங்கள் தொகுதியின் குரல்</p>
+</div>
 
         <div className="form-group">
           <label>கைபேசி எண்</label>
